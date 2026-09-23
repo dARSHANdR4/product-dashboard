@@ -7,6 +7,8 @@ import { useToast } from '@/context/ToastContext';
 import { ProductsProvider } from '@/context/ProductsContext';
 import Navbar from '@/components/layout/Navbar';
 
+import { getToken } from '@/lib/auth';
+
 /**
  * Route guard for all /products/* pages.
  * Redirects unauthenticated users to /login.
@@ -22,7 +24,9 @@ export default function ProductsLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // Also check getToken() synchronously to prevent race conditions 
+    // where router.replace happens before AuthContext state fully flushes.
+    if (!isLoading && !isAuthenticated && !getToken()) {
       showToast('Please sign in to continue', 'info');
       router.replace('/login');
     }
@@ -43,7 +47,7 @@ export default function ProductsLayout({
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated && !getToken()) return null;
 
   return (
     <ProductsProvider onToast={showToast}>
