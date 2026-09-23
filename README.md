@@ -4,7 +4,7 @@ A feature-rich, responsive product management dashboard built with Next.js (App 
 
 ## 🚀 Live Demo
 
-**Deployment:** [View Live App on Vercel](#) *(Link will be generated upon Vercel deployment)*
+**Deployment:** [View Live App on Vercel](https://product-dashboard-nine-rouge.vercel.app/)
 
 **Test Credentials:**
 - **Username:** `emilys`
