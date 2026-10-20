@@ -81,3 +81,10 @@ AI tools were leveraged during this project primarily for:
 2. **Icon generation:** Writing the inline SVG strings for the various UI icons (sun/moon, checkmarks, warning icons) without needing to install an external icon library.
 3. **Data interfaces:** Quickly generating comprehensive TypeScript interfaces (`Product`, `ProductReview`) from the DummyJSON documentation JSON responses.
 All architectural logic, state management (especially the complex optimistic update and bulk delete logic), and React Context plumbing was hand-rolled.
+
+
+## Copyright and permissions
+
+Copyright © 2026 dARSHANdR4. All rights reserved.
+
+Unless otherwise stated, original project code and assets are reserved and no open-source licence is granted. Third-party materials remain subject to their respective licences. Public repositories may still be viewed and forked through GitHub's platform functionality. See [COPYRIGHT](./COPYRIGHT) for the full notice.
