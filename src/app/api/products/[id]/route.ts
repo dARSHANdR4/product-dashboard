@@ -25,7 +25,6 @@ export async function PUT(request: Request, context: Context) {
     if (!existing[0]) throw new ApiFailure(404, 'Product not found');
     const current = toProduct(existing[0]);
     const merged = normalizeProduct({ ...current, ...body, id });
-    delete (merged as Partial<typeof merged>).id;
     const rows = await dbRequest<Record<string, unknown>[]>(`?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(merged) });
     if (!rows[0]) throw new ApiFailure(404, 'Product not found');
     return Response.json(toProduct(rows[0]));
