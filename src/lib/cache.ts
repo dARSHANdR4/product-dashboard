@@ -1,74 +1,13 @@
-// lib/cache.ts — In-memory request cache with TTL
-// Keyed by a deterministic serialization of query state.
-// Lives at module level so it survives client-side navigation but resets on full page reload.
+// lib/cache.ts — typed application wrapper around the dependency-free cache core.
+import { InMemoryCache, buildCacheKey } from './cache-core.mjs';
 
-import type { CacheEntry } from '@/types';
+export { buildCacheKey };
 
-const TTL_MS = 60_000; // 60 seconds
-const MAX_ENTRIES = 100;
-
-class InMemoryCache {
-  private store = new Map<string, CacheEntry<unknown>>();
-
-  /** Returns cached data if it exists and isn't stale, otherwise null */
-  get<T>(key: string): T | null {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-    if (Date.now() - entry.timestamp > TTL_MS) {
-      this.store.delete(key);
-      return null;
-    }
-    return entry.data as T;
-  }
-
-  /** Stores data under the given key */
-  set<T>(key: string, data: T): void {
-    // Replacing an existing key must not evict an unrelated entry.
-    if (!this.store.has(key) && this.store.size >= MAX_ENTRIES) {
-      const firstKey = this.store.keys().next().value;
-      if (firstKey !== undefined) this.store.delete(firstKey);
-    }
-    this.store.set(key, { data, timestamp: Date.now() });
-  }
-
-  /** Delete a specific key */
-  delete(key: string): void {
-    this.store.delete(key);
-  }
-
-  /** Clear the entire cache — called after any mutation (add/edit/delete) */
-  clear(): void {
-    this.store.clear();
-  }
-
-  /** Check if a key exists and is fresh */
-  has(key: string): boolean {
-    return this.get(key) !== null;
-  }
-
-  get size(): number {
-    return this.store.size;
-  }
-}
-
-// Singleton instance
-export const productCache = new InMemoryCache();
-
-/** Build a collision-resistant cache key from all query parameters. */
-export function buildCacheKey(params: {
-  page: number;
-  limit: number;
-  search: string;
-  category: string;
-  sortBy: string;
-  sortOrder: string;
-}): string {
-  return JSON.stringify([
-    params.page,
-    params.limit,
-    params.search,
-    params.category,
-    params.sortBy,
-    params.sortOrder,
-  ]);
-}
+export const productCache = new InMemoryCache() as {
+  get<T>(key: string): T | null;
+  set<T>(key: string, data: T): void;
+  delete(key: string): void;
+  clear(): void;
+  has(key: string): boolean;
+  readonly size: number;
+};
