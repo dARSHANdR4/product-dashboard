@@ -1,30 +1,35 @@
-# PostgreSQL persistence setup
+# Persistent product backend setup
 
-This project currently uses DummyJSON for demo authentication and product data. DummyJSON accepts mutation requests but does not persist product changes. The Prisma schema in this folder is the planned persistent product store; it is not active until the Prisma client, server routes, migrations, and environment variable are configured.
+The dashboard includes Next.js API routes backed by PostgreSQL through Supabase PostgREST. Product screens can keep their existing DummyJSON-shaped responses and switch to the database API through one environment flag.
 
-## Recommended provider
+## Configure Supabase
 
-Use a hosted PostgreSQL provider such as Neon or Supabase. Create a dedicated development database first; do not use production data while testing.
+Create a Supabase project, then set these environment variables in local `.env.local` and in Vercel's encrypted Environment Variables. Never commit real credentials or expose the service-role key through a `NEXT_PUBLIC_*` variable.
 
-## Required environment variables
+- `SUPABASE_URL`: project URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only service role key.
+- `NEXT_PUBLIC_PRODUCT_API_MODE=database`: switches product API requests to this app's `/api/products` routes.
 
-Configure these only in your local ignored `.env` file and in the deployment platform's encrypted environment-variable settings:
+Leave the mode unset to keep the current DummyJSON product demo until database setup is complete.
 
-- `DATABASE_URL`: pooled PostgreSQL connection string for application queries.
-- `DIRECT_URL`: direct PostgreSQL connection string for schema migrations, if the provider supplies a separate direct endpoint.
+## Create the products table
 
-Never commit real connection strings, passwords, or `.env` files.
+Run `supabase/migrations/202610260001_products.sql` in the Supabase SQL Editor. The migration creates the product table, constraints, indexes and updated-at trigger. Row-level security is enabled. The service-role key is only used server-side.
 
-## Planned implementation sequence
+## Import the initial catalogue
 
-1. Add and pin Prisma dependencies and regenerate `package-lock.json`.
-2. Generate the Prisma client from `prisma/schema.prisma`.
-3. Create a first migration and verify it against a disposable development database.
-4. Add Next.js Route Handlers for list/search/detail/create/update/delete, with server-side validation.
-5. Switch the frontend product API service from DummyJSON to the local `/api/products` endpoints.
-6. Add database-backed integration tests and run typecheck, lint, tests, and production build in CI.
-7. Configure the hosted deployment's environment variables only after CI passes.
+The new table starts empty. Before switching the app:
+1. Fetch `https://dummyjson.com/products?limit=0`.
+2. Import those product objects into `public.products`; omit remote IDs so PostgreSQL generates its own IDs.
+3. Ensure each SKU is unique. Generate one for missing or duplicate SKUs.
+4. Verify row count and spot-check records before enabling database mode.
 
-## Data migration note
+Do not add a public seed endpoint.
 
-DummyJSON data is sample data. This migration creates a new, empty product table; it does not automatically import the remote catalogue. Seed/import functionality should be added deliberately and must be safe to run more than once.
+## Authentication and API behaviour
+
+Login remains on DummyJSON to avoid breaking the current login screen. Mutating endpoints validate the existing bearer token before writing to the database. Reads are public, matching the current demo's catalogue experience. Product changes are stored in PostgreSQL, so refreshes and later sessions read the saved records.
+
+## Rollout checklist
+
+Verify list/search/category/detail, add, edit, delete, bulk delete, pagination, sorting, invalid inputs, and persistence after refresh. The deployment is not connected until the migration and import have run and the server-side environment variables are configured. Keep the mode unset until those steps are complete.
