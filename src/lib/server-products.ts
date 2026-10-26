@@ -3,7 +3,7 @@ import type { Product } from '@/types';
 const tableUrl = () => {
   const base = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!base || !key) throw new Error('Database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  if (!base || !key) throw new ApiFailure(503, 'Database is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   return { url: `${base.replace(/\/$/, '')}/rest/v1/products`, key };
 };
 
@@ -13,17 +13,12 @@ export class ApiFailure extends Error {
 
 export async function dbRequest<T>(path = '', init: RequestInit = {}): Promise<T> {
   const { url, key } = tableUrl();
-  const response = await fetch(`${url}${path}`, {
-    ...init,
-    cache: 'no-store',
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-      ...init.headers,
-    },
-  });
+  const headers = new Headers(init.headers);
+  headers.set('apikey', key);
+  headers.set('Authorization', `Bearer ${key}`);
+  headers.set('Content-Type', 'application/json');
+  if (!headers.has('Prefer')) headers.set('Prefer', 'return=representation');
+  const response = await fetch(`${url}${path}`, { ...init, cache: 'no-store', headers });
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
     throw new ApiFailure(response.status === 404 ? 404 : 502, detail || 'Database request failed');
