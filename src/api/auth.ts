@@ -1,16 +1,19 @@
 // api/auth.ts — Authentication service
-import axiosInstance from '@/lib/axios';
+import axios from 'axios';
 import type { LoginCredentials, AuthUser } from '@/types';
 
 /**
- * Logs in a user via POST /auth/login
- * Returns the full AuthUser including token on success.
+ * Logs in through our same-origin API route so the browser does not call
+ * DummyJSON directly and trigger its cross-origin preflight restrictions.
  */
 export async function login(credentials: LoginCredentials): Promise<AuthUser> {
-  const response = await axiosInstance.post<AuthUser>('/auth/login', {
+  const response = await axios.post<AuthUser>('/api/auth/login', {
     username: credentials.username,
     password: credentials.password,
     expiresInMins: 60,
+  }, {
+    timeout: 20000,
+    headers: { 'Content-Type': 'application/json' },
   });
   return response.data;
 }
