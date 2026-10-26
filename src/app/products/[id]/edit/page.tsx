@@ -84,7 +84,7 @@ export default function EditProductPage() {
 
       <div className="fade-up" style={{ animationDelay: '50ms' }}>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Edit Product</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Make changes to "{product.title}".</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Make changes to &quot;{product.title}&quot;.</p>
       </div>
 
       <ProductForm initialData={product} isEdit={true} />
