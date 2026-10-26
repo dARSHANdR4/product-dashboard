@@ -257,35 +257,17 @@ export function ProductsProvider({
       const apiResult = await addProduct(data);
       productCache.clear();
 
-      // DummyJSON returns id=194 for all new products; give it a temp local ID
-      const localProduct: Product = {
+      // The backend owns the permanent ID; never replace it with a temporary client ID.
+      const savedProduct: Product = {
         ...apiResult,
         ...data,
-        id: -(Date.now()), // negative ID signals locally-added
-        _isLocal: true,
+        id: apiResult.id,
+        _isLocal: false,
         _optimisticStatus: 'idle',
-        images: data.images ?? [data.thumbnail ?? ''],
-        reviews: [],
-        tags: [],
-        rating: 0,
-        discountPercentage: Number(data.discountPercentage) || 0,
-        stock: Number(data.stock) || 0,
-        price: Number(data.price) || 0,
-        meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), barcode: '', qrCode: '' },
-        dimensions: { width: 0, height: 0, depth: 0 },
-        weight: 0,
-        sku: '',
-        warrantyInformation: '',
-        shippingInformation: '',
-        availabilityStatus: 'In Stock',
-        returnPolicy: '',
-        minimumOrderQuantity: 1,
       };
-
-      setProductsState((prev) => [localProduct, ...prev]);
+      setProductsState((prev) => [savedProduct, ...prev]);
       setTotal((t) => t + 1);
-
-      return localProduct;
+      return savedProduct;
     },
     []
   );
