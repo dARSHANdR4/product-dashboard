@@ -1,7 +1,6 @@
 // lib/cache.ts — In-memory request cache with TTL
-// Keyed by a deterministic string built from query state.
+// Keyed by a deterministic serialization of query state.
 // Lives at module level so it survives client-side navigation but resets on full page reload.
-// This is intentional: memory-only simplicity tradeoff (no IndexedDB/localStorage needed).
 
 import type { CacheEntry } from '@/types';
 
@@ -24,10 +23,10 @@ class InMemoryCache {
 
   /** Stores data under the given key */
   set<T>(key: string, data: T): void {
-    // Evict oldest entry if at capacity
-    if (this.store.size >= MAX_ENTRIES) {
+    // Replacing an existing key must not evict an unrelated entry.
+    if (!this.store.has(key) && this.store.size >= MAX_ENTRIES) {
       const firstKey = this.store.keys().next().value;
-      if (firstKey) this.store.delete(firstKey);
+      if (firstKey !== undefined) this.store.delete(firstKey);
     }
     this.store.set(key, { data, timestamp: Date.now() });
   }
@@ -55,7 +54,7 @@ class InMemoryCache {
 // Singleton instance
 export const productCache = new InMemoryCache();
 
-/** Build a deterministic cache key from query parameters */
+/** Build a collision-resistant cache key from all query parameters. */
 export function buildCacheKey(params: {
   page: number;
   limit: number;
@@ -64,5 +63,12 @@ export function buildCacheKey(params: {
   sortBy: string;
   sortOrder: string;
 }): string {
-  return `${params.page}-${params.limit}-${params.search}-${params.category}-${params.sortBy}-${params.sortOrder}`;
+  return JSON.stringify([
+    params.page,
+    params.limit,
+    params.search,
+    params.category,
+    params.sortBy,
+    params.sortOrder,
+  ]);
 }
