@@ -1,7 +1,7 @@
 // api/products.ts — All product-related API services
 // Never call axiosInstance directly inside components — always use these functions.
 
-import axiosInstance from '@/lib/axios';
+import axiosInstance from '@/lib/product-axios';
 import type { Product, PaginatedProducts } from '@/types';
 
 // ─── List + Paginate ──────────────────────────────────────────────────────────
