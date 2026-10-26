@@ -1,4 +1,4 @@
-import { dbRequest, jsonError, normalizeProduct, queryOptions, requireUser, toProduct } from '@/lib/server-products';
+import { dbCount, dbRequest, jsonError, normalizeProduct, queryOptions, requireUser, toProduct } from '@/lib/server-products';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +18,8 @@ export async function GET(request: Request) {
     const countFilters = ['select=id'];
     if (q) countFilters.push(`or=(title.ilike.*${encodeURIComponent(q)}*,description.ilike.*${encodeURIComponent(q)}*,brand.ilike.*${encodeURIComponent(q)}*)`);
     if (category) countFilters.push(`category=eq.${encodeURIComponent(category)}`);
-    const allMatching = await dbRequest<Record<string, unknown>[]>(`?${countFilters.join('&')}`);
-    return Response.json({ products: rows.map(toProduct), total: allMatching.length, skip, limit });
+    const total = await dbCount(countFilters.join('&'));
+    return Response.json({ products: rows.map(toProduct), total, skip, limit });
   } catch (error) { return jsonError(error); }
 }
 
