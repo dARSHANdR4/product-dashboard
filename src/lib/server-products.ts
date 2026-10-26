@@ -56,6 +56,19 @@ export function jsonError(error: unknown): Response {
 }
 
 const allowedSort = new Set(['id', 'title', 'price', 'rating', 'stock', 'category', 'createdAt']);
+export async function dbCount(filters: string): Promise<number> {
+  const { url, key } = tableUrl();
+  const response = await fetch(`${url}?${filters}`, {
+    method: 'HEAD',
+    cache: 'no-store',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, Prefer: 'count=exact' },
+  });
+  if (!response.ok) throw new ApiFailure(502, 'Unable to count products');
+  const range = response.headers.get('content-range');
+  const total = range?.split('/')[1];
+  return total && total !== '*' ? Number(total) : 0;
+}
+
 export function queryOptions(url: URL) {
   const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
   const skip = Math.max(0, Number.parseInt(url.searchParams.get('skip') || '0', 10) || 0);
