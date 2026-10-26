@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProducts } from '@/context/ProductsContext';
 import { useToast } from '@/context/ToastContext';
@@ -94,7 +94,7 @@ export default function ProductForm({ initialData, isEdit }: Props) {
         router.push(`/products/${newProduct.id}`);
       }
     } catch (err) {
-      const msg = (err as any)?.message || 'An error occurred while saving';
+      const msg = (err as { message?: string } | null)?.message || 'An error occurred while saving';
       showToast(msg, 'error');
       setIsSubmitting(false);
     }
