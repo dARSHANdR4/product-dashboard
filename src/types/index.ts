@@ -11,7 +11,10 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   image: string;
-  token: string;
+  /** Legacy field returned by older DummyJSON auth responses. */
+  token?: string;
+  /** Current DummyJSON access token field. */
+  accessToken?: string;
   refreshToken: string;
 }
 
@@ -97,13 +100,11 @@ export interface Toast {
   type: ToastType;
 }
 
-// ─── Cache ───────────────────────────────────────────────────────────────────
 export interface CacheEntry<T> {
   data: T;
   timestamp: number;
 }
 
-// ─── Query State ──────────────────────────────────────────────────────────────
 export interface ProductsQueryState {
   page: number;
   limit: number;
@@ -113,7 +114,6 @@ export interface ProductsQueryState {
   sortOrder: SortOrder;
 }
 
-// ─── API Error ────────────────────────────────────────────────────────────────
 export interface ApiError {
   message: string;
   status?: number;

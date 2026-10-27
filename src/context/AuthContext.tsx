@@ -19,9 +19,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<AuthUser | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // true during hydration
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Rehydrate from sessionStorage on mount
   useEffect(() => {
     const storedToken = getToken();
     const storedUser = getUser<AuthUser>();
@@ -33,10 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
-    const userData = await loginApi(credentials);
-    setToken(userData.token);
+    const responseUser = await loginApi(credentials);
+    // DummyJSON now returns accessToken; older responses used token.
+    const accessToken = responseUser.accessToken || responseUser.token;
+    if (!accessToken) {
+      throw new Error('Login response did not contain an access token. Please try again.');
+    }
+    const userData: AuthUser = { ...responseUser, token: accessToken };
+    setToken(accessToken);
     setUser(userData);
-    setTokenState(userData.token);
+    setTokenState(accessToken);
     setUserState(userData);
   }, []);
 
