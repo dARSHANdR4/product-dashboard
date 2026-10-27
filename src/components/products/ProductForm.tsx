@@ -82,6 +82,8 @@ export default function ProductForm({ initialData, isEdit }: Props) {
         brand: formData.brand,
         discountPercentage: Number(formData.discountPercentage),
         thumbnail: formData.thumbnail || 'https://cdn.dummyjson.com/product-images/1/thumbnail.jpg',
+        // The detail page renders `images`, so keep it in sync with the editable thumbnail URL.
+        images: formData.thumbnail.trim() ? [formData.thumbnail.trim()] : [],
       };
 
       if (isEdit && initialData) {
