@@ -1,4 +1,5 @@
 import type { Product } from '@/types';
+import { resolveProductImages, validateProductInput } from './product-validation.mjs';
 
 const tableUrl = () => {
   const base = process.env.SUPABASE_URL;
@@ -74,16 +75,14 @@ export function queryOptions(url: URL) {
 }
 
 export function normalizeProduct(input: Partial<Product>) {
-  if (typeof input.title !== 'string' || !input.title.trim()) throw new ApiFailure(400, 'Product title is required');
-  if (typeof input.category !== 'string' || !input.category.trim()) throw new ApiFailure(400, 'Product category is required');
-  const price = Number(input.price);
-  const stock = Number(input.stock ?? 0);
-  if (!Number.isFinite(price) || price < 0) throw new ApiFailure(400, 'Price must be a non-negative number');
-  if (!Number.isInteger(stock) || stock < 0) throw new ApiFailure(400, 'Stock must be a non-negative integer');
+  const validation = validateProductInput(input);
+  if (!validation.ok) throw new ApiFailure(400, validation.message);
+  const { title, category, price, stock } = validation.value;
+  const { images, thumbnail } = resolveProductImages(input);
   return {
-    title: input.title.trim(),
+    title,
     description: input.description ?? '',
-    category: input.category.trim(),
+    category,
     price,
     discountPercentage: Number(input.discountPercentage ?? 0),
     rating: Number(input.rating ?? 0),
@@ -100,8 +99,8 @@ export function normalizeProduct(input: Partial<Product>) {
     returnPolicy: input.returnPolicy ?? '',
     minimumOrderQuantity: Number(input.minimumOrderQuantity ?? 1),
     meta: input.meta ?? { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), barcode: '', qrCode: '' },
-    images: input.images ?? (input.thumbnail ? [input.thumbnail] : []),
-    thumbnail: input.thumbnail ?? input.images?.[0] ?? '',
+    images,
+    thumbnail,
   };
 }
 
