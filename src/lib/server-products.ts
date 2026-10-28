@@ -1,5 +1,5 @@
 import type { Product } from '@/types';
-import { resolveProductImages, validateProductInput } from './product-validation.mjs';
+import { resolveProductImages, resolveProductQueryOptions, validateProductInput } from './product-validation.mjs';
 
 const tableUrl = () => {
   const base = process.env.SUPABASE_URL;
@@ -51,7 +51,6 @@ export function jsonError(error: unknown): Response {
   return Response.json({ message }, { status });
 }
 
-const allowedSort = new Set(['id', 'title', 'price', 'rating', 'stock', 'category', 'createdAt']);
 export async function dbCount(filters: string): Promise<number> {
   const { url, key } = tableUrl();
   const response = await fetch(`${url}?${filters}`, {
@@ -66,12 +65,9 @@ export async function dbCount(filters: string): Promise<number> {
 }
 
 export function queryOptions(url: URL) {
-  const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
-  const skip = Math.max(0, Number.parseInt(url.searchParams.get('skip') || '0', 10) || 0);
-  const sortBy = url.searchParams.get('sortBy') || 'id';
-  const order = url.searchParams.get('order') === 'desc' ? 'desc' : 'asc';
-  if (!allowedSort.has(sortBy)) throw new ApiFailure(400, 'Unsupported sort field');
-  return { limit, skip, sortBy, order };
+  const result = resolveProductQueryOptions(url.searchParams);
+  if (!result.ok) throw new ApiFailure(400, String(result.message ?? 'Invalid product query'));
+  return result.value!;
 }
 
 export function normalizeProduct(input: Partial<Product>) {
