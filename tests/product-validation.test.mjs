@@ -24,14 +24,14 @@ test('product validation rejects missing title and category', () => {
   });
 });
 
-test('product validation rejects negative or non-finite prices', () => {
-  for (const price of [-1, 'not-a-price', Infinity, NaN]) {
+test('product validation rejects negative, empty, or non-finite prices', () => {
+  for (const price of [-1, '', '   ', 'not-a-price', Infinity, NaN]) {
     assert.equal(validateProductInput({ title: 'Item', category: 'audio', price }).ok, false);
   }
 });
 
-test('product validation rejects negative and fractional stock', () => {
-  for (const stock of [-1, 1.5, 'not-stock']) {
+test('product validation rejects negative, fractional, and unsafe stock', () => {
+  for (const stock of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, 'not-stock']) {
     assert.deepEqual(
       validateProductInput({ title: 'Item', category: 'audio', price: 1, stock }),
       { ok: false, message: 'Stock must be a non-negative integer' },
