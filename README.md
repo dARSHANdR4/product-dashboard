@@ -1,87 +1,88 @@
 # Product Admin Dashboard
 
-A feature-rich, responsive product management dashboard built with Next.js (App Router), TypeScript, Tailwind CSS, and Axios. Consumes the free [DummyJSON API](https://dummyjson.com).
+A responsive product management dashboard built with Next.js App Router, TypeScript, Tailwind CSS, and Axios. It supports product management through either the DummyJSON demo API or a persistent PostgreSQL catalogue hosted on Supabase.
 
-## 🚀 Live Demo
+## Live demo
 
-**Deployment:** [View Live App on Vercel](https://product-dashboard-nine-rouge.vercel.app/)
+**Deployment:** [View the app on Vercel](https://product-dashboard-nine-rouge.vercel.app/)
 
-**Test Credentials:**
-- **Username:** `emilys`
-- **Password:** `emilyspass`
+**Demo login (DummyJSON):**
+- Username: `emilys`
+- Password: `emilyspass`
 
-## 📦 Setup & Local Development
+The demo credentials are for the current authentication flow. Do not use them as production credentials for any other service.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/dARSHANdR4/product-dashboard.git
-   cd product-dashboard
-   ```
+## Features
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Product management
+- Responsive product list and detail pages.
+- Pagination, URL-synced state, debounced search, category filtering, and sorting.
+- Create, edit, delete, and bulk-delete flows with form validation and confirmation UI.
+- Product image handling, loading skeletons, empty states, error states, and retry actions.
+- Optimistic edit/delete updates with rollback on failed requests.
+- In-memory product-list cache with a 60-second TTL and cache invalidation after mutations.
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+### Experience and engineering
+- Authentication guard and shared Axios interceptors.
+- Automatic redirect to login on HTTP 401.
+- Dark mode, toast notifications, and responsive layouts.
+- TypeScript type checking, ESLint, Node.js unit tests, and a production build in GitHub Actions CI.
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Backend modes
 
-## ✅ Feature Checklist
+The product API transport is selected with `NEXT_PUBLIC_PRODUCT_API_MODE`:
 
-### Core Requirements
-- [x] **Authentication:** Login page, inline errors, auth guard middleware, double-submit lock.
-- [x] **Shared Axios Instance:** Interceptors inject token and normalize error shapes (auto-logout on 401).
-- [x] **Product List & Pagination:** Responsive table/cards, server-pagination, state synced to URL, bounds checking.
-- [x] **Search:** Debounced input (450ms) with `AbortController` to prevent race conditions.
-- [x] **Filter & Sort:** Category dropdown, multi-field sorting, asc/desc toggle.
-- [x] **Product Detail Page:** Dynamic route, custom "Not Found" UI, info grid, review listing.
-- [x] **CRUD Operations:** Client-side form validation, delete confirmation modal.
-- [x] **Loading/Empty States:** Shimmer skeletons, distinct "No results" empty states, error state with Retry button.
-- [x] **Engineering Rules:** No external UI/fetching libraries (hand-rolled contexts/hooks), small components, TS rigor.
+- **DummyJSON demo mode (default):** leave the variable unset. DummyJSON is a mock API; successful writes are not persisted by DummyJSON. Local context only reflects changes during the current app session.
+- **Supabase database mode:** set `NEXT_PUBLIC_PRODUCT_API_MODE=database`. Product reads and writes then use the app's Next.js `/api/products` routes, backed by the Supabase PostgREST API and PostgreSQL. Product changes persist across refreshes and sessions.
 
-### Differentiators (Advanced Features)
-- [x] **Optimistic UI Updates with Rollback:** Edit and delete update the UI immediately and rollback gracefully if the request fails.
-- [x] **Dark Mode Toggle:** Explicit user control (`class` strategy) persisted to `localStorage`, with OS-fallback and FOUC prevention.
-- [x] **Toast Notification System:** Custom built context/provider handling stacked notifications, auto-dismiss, and progress bars.
-- [x] **Bulk Actions:** Select multiple products for bulk deletion via `Promise.allSettled`, with partial UI rollback for failed deletions.
-- [x] **In-Memory Cache Layer:** deterministic string keyed cache for product lists to eliminate redundant network round trips (60s TTL).
+Login remains on DummyJSON in both modes. The database-backed write routes validate the existing bearer token before accepting mutations.
 
-## 🧠 Design Decisions & Tradeoffs
+### Supabase environment variables
 
-### 1. Token Storage
-**Decision:** Tokens are stored in a module-level variable (memory) and backed up to `sessionStorage`.
-**Why:** The DummyJSON API doesn't allow setting secure `httpOnly` cookies via a proxy. Storing directly in `localStorage` makes the app vulnerable to XSS. `sessionStorage` mitigates this slightly by scoping the token to the tab session, allowing the app to survive page refreshes while remaining more secure than persistent local storage.
+Configure these in Vercel (or in your local, uncommitted environment):
 
-### 2. Search & Category Mutual Exclusivity
-**Decision:** Selecting a category clears the search term, and typing a search clears the active category.
-**Why:** DummyJSON does not provide an endpoint that supports querying by *both* search term and category simultaneously. Rather than silently ignoring one of the user's inputs, the UI explicitly clears the conflicting filter and shows a Toast explaining the action (e.g., "Category selected — search cleared").
+- `SUPABASE_URL`: Supabase project URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only secret key. Never prefix it with `NEXT_PUBLIC_`, commit it, or expose it in client-side code.
+- `NEXT_PUBLIC_PRODUCT_API_MODE=database`: set for the Production environment when using the persistent product backend.
 
-### 3. Simulating Local Persistence
-**Decision:** All successful CRUD actions are merged into a global `ProductsContext`.
-**Why:** DummyJSON is a mock API; it accepts POST/PUT/DELETE requests and returns success (HTTP 200/201), but does not persist the changes to the database. To create a seamless UX, the dashboard artificially merges these returned changes into local context state. Newly added products receive a temporary negative ID so the UI can render them during the session. The cache is immediately invalidated upon any mutation to prevent stale data from resurfacing.
+Follow [the database setup guide](docs/database-setup.md) for the table migration, initial catalogue import, environment configuration, and rollout verification. Do not enable database mode until the migration and required server-side variables are ready.
 
-### 4. Cache & Revalidation Strategy
-**Decision:** Serve directly from cache on hit without background revalidation.
-**Why:** A stale-while-revalidate pattern is overkill for a mock API and introduces visual stutter if the mock data resets out from under the user. The 60-second TTL strikes a balance between speed and freshness.
+## Local development
 
-## 🐛 Challenges & Solutions
+Requirements: Node.js 22 and npm.
 
-**Problem:** Testing optimistic rollback paths for edit and delete.
-**Context:** Since DummyJSON always returns `200 OK` for mutations, it was impossible to organically verify that the UI correctly reverted to its previous state upon an API failure.
-**Solution:** I implemented a developer-only `simulateFailure` flag in `ProductsContext`. A hidden toggle button in the Navbar (visible only in dev mode) allows me to artificially throw an error inside the `try/catch` block *after* the optimistic UI update is applied but *before* the API call completes. This successfully proved the snapshot-and-revert logic works flawlessly, and triggers the appropriate error toast.
+```bash
+git clone https://github.com/dARSHANdR4/product-dashboard.git
+cd product-dashboard
+npm ci
+npm run dev
+```
 
-## 🤖 AI Usage
+Open [http://localhost:3000](http://localhost:3000).
 
-AI tools were leveraged during this project primarily for:
-1. **Scaffolding boilerplate CSS:** Generating the raw keyframe animations for the shimmer skeletons and toast slide-in/out effects.
-2. **Icon generation:** Writing the inline SVG strings for the various UI icons (sun/moon, checkmarks, warning icons) without needing to install an external icon library.
-3. **Data interfaces:** Quickly generating comprehensive TypeScript interfaces (`Product`, `ProductReview`) from the DummyJSON documentation JSON responses.
-All architectural logic, state management (especially the complex optimistic update and bulk delete logic), and React Context plumbing was hand-rolled.
+## Quality checks
 
+Run these before submitting changes:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+GitHub Actions runs the type check, lint, unit tests, and production build for pull requests targeting `main`.
+
+## Design notes and trade-offs
+
+- **Token storage:** the current client auth implementation keeps a token in module memory and backs it up to `sessionStorage`. This is a demo-oriented approach, not a replacement for a production-grade server-managed session with secure, HttpOnly cookies.
+- **Search and category:** the UI clears one when the other is selected to avoid implying that unsupported combinations are applied in demo mode.
+- **Cache:** product-list responses are cached in memory for up to 60 seconds; successful mutations invalidate the cache.
+- **Failure simulation:** a development-only control exists to exercise optimistic rollback paths. Do not enable test-failure behavior in production.
+
+## AI usage
+
+AI tools assisted with selected boilerplate styling, icon SVGs, and TypeScript data interfaces. The project-specific architecture, state management, optimistic update flows, and React Context integration were developed and refined as part of the application work.
 
 ## Copyright and permissions
 
