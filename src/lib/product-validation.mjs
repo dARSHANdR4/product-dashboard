@@ -39,3 +39,19 @@ export function parseProductId(raw) {
   const id = Number(raw);
   return Number.isSafeInteger(id) && id >= 1 ? id : null;
 }
+
+const allowedSortFields = new Set(['id', 'title', 'price', 'rating', 'stock', 'category', 'createdAt']);
+
+/** Parse public product-list query parameters without trusting sort-field input. */
+export function resolveProductQueryOptions(params) {
+  const limit = Math.min(100, Math.max(1, Number.parseInt(params.get('limit') || '10', 10) || 10));
+  const skip = Math.max(0, Number.parseInt(params.get('skip') || '0', 10) || 0);
+  const sortBy = params.get('sortBy') || 'id';
+  const order = params.get('order') === 'desc' ? 'desc' : 'asc';
+
+  if (!allowedSortFields.has(sortBy)) {
+    return { ok: false, message: 'Unsupported sort field' };
+  }
+
+  return { ok: true, value: { limit, skip, sortBy, order } };
+}
