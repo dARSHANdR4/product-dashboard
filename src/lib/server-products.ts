@@ -77,7 +77,7 @@ export function queryOptions(url: URL) {
 export function normalizeProduct(input: Partial<Product>) {
   const validation = validateProductInput(input);
   if (!validation.ok) {
-    throw new ApiFailure(400, 'message' in validation ? validation.message : 'Invalid product input');
+    throw new ApiFailure(400, String(validation.message ?? 'Invalid product input'));
   }
   const value = validation.value!;
   const { title, category, price, stock } = value;
