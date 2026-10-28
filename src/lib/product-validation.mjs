@@ -7,12 +7,13 @@ export function validateProductInput(input = {}) {
     return { ok: false, message: 'Product category is required' };
   }
 
+  const hasPrice = input.price !== undefined && input.price !== null && String(input.price).trim() !== '';
   const price = Number(input.price);
   const stock = Number(input.stock ?? 0);
-  if (!Number.isFinite(price) || price < 0) {
+  if (!hasPrice || !Number.isFinite(price) || price < 0) {
     return { ok: false, message: 'Price must be a non-negative number' };
   }
-  if (!Number.isInteger(stock) || stock < 0) {
+  if (!Number.isSafeInteger(stock) || stock < 0) {
     return { ok: false, message: 'Stock must be a non-negative integer' };
   }
 
