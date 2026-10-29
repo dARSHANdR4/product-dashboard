@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProducts } from '@/context/ProductsContext';
 import { useToast } from '@/context/ToastContext';
+import { getCategories } from '@/api/products';
 import type { Product, ProductFormData } from '@/types';
 
 interface Props {
@@ -29,6 +30,19 @@ export default function ProductForm({ initialData, isEdit }: Props) {
 
   const [errors, setErrors] = useState<Partial<Record<keyof ProductFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    let active = true;
+    getCategories()
+      .then((items) => {
+        if (active) setAvailableCategories(items.map((item) => item.slug).filter(Boolean));
+      })
+      .catch(() => {
+        // Existing/custom categories can still be entered if suggestions are unavailable.
+      });
+    return () => { active = false; };
+  }, []);
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof ProductFormData, string>> = {};
@@ -143,26 +157,35 @@ export default function ProductForm({ initialData, isEdit }: Props) {
           {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
         </div>
 
-        {/* Category */}
+        {/* Category: existing suggestions plus manual category entry */}
         <div className="space-y-2">
           <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Category
+            Category <span className="text-red-500">*</span>
           </label>
-          <select
+          <input
             id="category"
             name="category"
+            type="text"
+            list="product-category-options"
             value={formData.category}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-          >
-            <option value="smartphones">Smartphones</option>
-            <option value="laptops">Laptops</option>
-            <option value="fragrances">Fragrances</option>
-            <option value="skincare">Skincare</option>
-            <option value="groceries">Groceries</option>
-            <option value="home-decoration">Home Decoration</option>
-            <option value="furniture">Furniture</option>
-          </select>
+            placeholder="Choose or add a category (e.g. Electronics)"
+            autoComplete="off"
+            required
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <datalist id="product-category-options">
+            {[...new Set([...availableCategories, formData.category, initialData?.category || ''].filter(Boolean))]
+              .sort((a, b) => a.localeCompare(b))
+              .map((category) => (
+                <option key={category} value={category}>
+                  {category.replace(/-/g, ' ').replace(/\\b\\w/g, (char) => char.toUpperCase())}
+                </option>
+              ))}
+          </datalist>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Select an existing category or type a new one. A new category is saved with the product and appears in the category filter once the product is saved.
+          </p>
         </div>
 
         {/* Brand */}
