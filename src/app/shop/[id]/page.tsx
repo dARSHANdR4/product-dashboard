@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { getProduct } from '@/api/products';
 import type { Product } from '@/types';
 
-const money = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(price);
+const money = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(price);
 
 export default function StoreProductDetailPage() {
   const params = useParams<{ id: string }>();
