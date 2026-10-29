@@ -182,7 +182,7 @@ export default function ProductForm({ initialData, isEdit }: Props) {
               .sort((a, b) => a.localeCompare(b))
               .map((category) => (
                 <option key={category} value={category}>
-                  {category.replace(/-/g, ' ').replace(/\\b\\w/g, (char) => char.toUpperCase())}
+                  {category.replace(/-/g, ' ')}
                 </option>
               ))}
           </datalist>
