@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import LoginForm from '@/components/auth/LoginForm';
 
 export const metadata: Metadata = {
@@ -30,6 +31,16 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           <LoginForm />
+        </div>
+
+        <div className="mt-5 text-center">
+          <Link
+            href="/shop"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+          >
+            Browse product catalogue
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
 
         {/* Test creds hint */}
