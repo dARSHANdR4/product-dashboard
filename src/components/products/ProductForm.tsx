@@ -49,6 +49,7 @@ export default function ProductForm({ initialData, isEdit }: Props) {
 
     if (!formData.title.trim()) newErrors.title = 'Title is required';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
+    if (!formData.category.trim()) newErrors.category = 'Category is required';
     
     const price = Number(formData.price);
     if (!formData.price || isNaN(price) || price <= 0) {
@@ -172,8 +173,10 @@ export default function ProductForm({ initialData, isEdit }: Props) {
             placeholder="Choose or add a category (e.g. Electronics)"
             autoComplete="off"
             required
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-invalid={Boolean(errors.category)}
+            className={`w-full px-4 py-2.5 rounded-xl border bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-colors focus:outline-none focus:ring-2 ${errors.category ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 dark:border-slate-700 focus:ring-blue-500'}`}
           />
+          {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
           <datalist id="product-category-options">
             {[...new Set([...availableCategories, formData.category, initialData?.category || ''].filter(Boolean))]
               .sort((a, b) => a.localeCompare(b))
