@@ -1,9 +1,10 @@
 import { ApiFailure, dbRequest, jsonError, normalizeProduct, requireUser, toProduct } from '@/lib/server-products';
+import { parseProductId } from '@/lib/product-validation.mjs';
 
 type Context = { params: Promise<{ id: string }> };
 function productId(raw: string): number {
-  const id = Number(raw);
-  if (!Number.isSafeInteger(id) || id < 1) throw new ApiFailure(400, 'Invalid product ID');
+  const id = parseProductId(raw);
+  if (id === null) throw new ApiFailure(400, 'Invalid product ID');
   return id;
 }
 

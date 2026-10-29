@@ -1,4 +1,5 @@
 import type { Product } from '@/types';
+import { resolveProductImages, resolveProductQueryOptions, validateProductInput } from './product-validation.mjs';
 
 const tableUrl = () => {
   const base = process.env.SUPABASE_URL;
@@ -50,7 +51,6 @@ export function jsonError(error: unknown): Response {
   return Response.json({ message }, { status });
 }
 
-const allowedSort = new Set(['id', 'title', 'price', 'rating', 'stock', 'category', 'createdAt']);
 export async function dbCount(filters: string): Promise<number> {
   const { url, key } = tableUrl();
   const response = await fetch(`${url}?${filters}`, {
@@ -65,25 +65,23 @@ export async function dbCount(filters: string): Promise<number> {
 }
 
 export function queryOptions(url: URL) {
-  const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
-  const skip = Math.max(0, Number.parseInt(url.searchParams.get('skip') || '0', 10) || 0);
-  const sortBy = url.searchParams.get('sortBy') || 'id';
-  const order = url.searchParams.get('order') === 'desc' ? 'desc' : 'asc';
-  if (!allowedSort.has(sortBy)) throw new ApiFailure(400, 'Unsupported sort field');
-  return { limit, skip, sortBy, order };
+  const result = resolveProductQueryOptions(url.searchParams);
+  if (!result.ok) throw new ApiFailure(400, String(result.message ?? 'Invalid product query'));
+  return result.value!;
 }
 
 export function normalizeProduct(input: Partial<Product>) {
-  if (typeof input.title !== 'string' || !input.title.trim()) throw new ApiFailure(400, 'Product title is required');
-  if (typeof input.category !== 'string' || !input.category.trim()) throw new ApiFailure(400, 'Product category is required');
-  const price = Number(input.price);
-  const stock = Number(input.stock ?? 0);
-  if (!Number.isFinite(price) || price < 0) throw new ApiFailure(400, 'Price must be a non-negative number');
-  if (!Number.isInteger(stock) || stock < 0) throw new ApiFailure(400, 'Stock must be a non-negative integer');
+  const validation = validateProductInput(input);
+  if (!validation.ok) {
+    throw new ApiFailure(400, String(validation.message ?? 'Invalid product input'));
+  }
+  const value = validation.value!;
+  const { title, category, price, stock } = value;
+  const { images, thumbnail } = resolveProductImages(input);
   return {
-    title: input.title.trim(),
+    title,
     description: input.description ?? '',
-    category: input.category.trim(),
+    category,
     price,
     discountPercentage: Number(input.discountPercentage ?? 0),
     rating: Number(input.rating ?? 0),
@@ -100,8 +98,8 @@ export function normalizeProduct(input: Partial<Product>) {
     returnPolicy: input.returnPolicy ?? '',
     minimumOrderQuantity: Number(input.minimumOrderQuantity ?? 1),
     meta: input.meta ?? { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), barcode: '', qrCode: '' },
-    images: input.images ?? (input.thumbnail ? [input.thumbnail] : []),
-    thumbnail: input.thumbnail ?? input.images?.[0] ?? '',
+    images,
+    thumbnail,
   };
 }
 
