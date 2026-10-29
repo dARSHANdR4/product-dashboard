@@ -13,12 +13,12 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Product Admin Dashboard',
-    template: '%s | Product Admin',
+    default: 'Goods — Product Catalogue',
+    template: '%s | Goods',
   },
   description:
-    'A feature-rich product management dashboard built with Next.js, TypeScript, Tailwind CSS, and Axios.',
-  keywords: ['product', 'admin', 'dashboard', 'management'],
+    'Explore the product catalogue, discover products, compare prices, and browse by category.',
+  keywords: ['products', 'catalogue', 'shopping', 'product discovery'],
 };
 
 export default function RootLayout({
