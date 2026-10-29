@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getCategories, getProducts, getProductsByCategory, searchProducts } from '@/api/products';
 import type { Product } from '@/types';
 
-const money = (price: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(price);
+const money = (price: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(price);
 const titleCase = (value: string) => value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 function ProductImage({ product }: { product: Product }) {
