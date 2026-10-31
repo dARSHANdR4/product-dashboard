@@ -49,11 +49,11 @@ RLS and SQL grants are separate controls and both are required:
 - The profile trigger runs as its owner and creates the profile. It does not assign roles.
 - Future public tables must enable RLS before they are exposed to the Data API. Policies must be operation-specific and tested for both allowed and denied access.
 
-The first owner must be bootstrapped by a trusted project administrator after the owner account has been created in Supabase Auth. Do not promote a user based on email domain, signup metadata, or a client-supplied role. The owner-facing staff creation UI and secure assignment RPC are a later PR; this migration intentionally does not expose role assignment to clients.
+The first owner must be bootstrapped by a trusted project administrator after the owner account has been created in Supabase Auth. Do not promote a user based on email domain, signup metadata, or a client-supplied role. A follow-up migration adds owner-only staff role assignment/removal RPCs; the first owner remains a one-time trusted SQL bootstrap.
 
 ## Migration
 
-Apply `supabase/migrations/202610310001_identity_and_rbac.sql` only after reviewing the target project's current migration history and confirming the `private` schema is not already used for unrelated application objects. The migration is additive and does not alter or delete product rows.
+Apply `supabase/migrations/202610300001_identity_and_rbac.sql` only after reviewing the target project's current migration history and confirming the `private` schema is not already used for unrelated application objects. The migration is additive and does not alter or delete product rows.
 
 Before production rollout:
 1. Enable email confirmations in Supabase Auth.
